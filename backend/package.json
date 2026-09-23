@@ -8,9 +8,11 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "gtfs": "node scripts/buildGtfs.js",
+    "gtfs:download": "node scripts/downloadGtfs.js",
     "celular": "node scripts/tunnel.js"
   },
   "dependencies": {
+    "adm-zip": "^0.5.18",
     "axios": "^1.7.9",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",

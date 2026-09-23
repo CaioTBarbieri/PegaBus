@@ -1,0 +1,17 @@
+# Configuração do Render (Blueprint): https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: pegabus
+    runtime: node
+    plan: free
+    buildCommand: npm run render-build
+    startCommand: npm start
+    healthCheckPath: /api/auth/status
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # Preencha no painel do Render (não ficam no código)
+      - key: SPTRANS_TOKEN
+        sync: false
+      - key: CARTO_API_KEY
+        sync: false

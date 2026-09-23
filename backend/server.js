@@ -39,12 +39,17 @@ app.get('/api/auth/status', (req, res) => {
   res.json({
     authenticated: olhoVivoService.isAuthenticated,
     mode: appMode,
-    hasToken: Boolean(olhoVivoService.getToken()),
-    tokenMasked: olhoVivoService.getToken() 
-      ? `${olhoVivoService.getToken().substring(0, 6)}...${olhoVivoService.getToken().slice(-4)}`
-      : null
+    hasToken: Boolean(olhoVivoService.getToken())
   });
 });
+
+// Rotas que alteram o token/modo: só com o header x-admin-key igual a ADMIN_KEY.
+// Sem ADMIN_KEY definida, ficam desativadas (o app é público na internet).
+function requireAdmin(req, res, next) {
+  const adminKey = process.env.ADMIN_KEY;
+  if (adminKey && req.get('x-admin-key') === adminKey) return next();
+  res.status(403).json({ error: 'Acesso negado.' });
+}
 
 app.get('/api/config', (req, res) => {
   res.json({
@@ -52,7 +57,7 @@ app.get('/api/config', (req, res) => {
   });
 });
 
-app.post('/api/auth/token', async (req, res) => {
+app.post('/api/auth/token', requireAdmin, async (req, res) => {
   const { token, mode } = req.body;
   if (!token && mode !== 'demo') {
     return res.status(400).json({ error: 'Token é obrigatório.' });
@@ -80,7 +85,7 @@ app.post('/api/auth/token', async (req, res) => {
   }
 });
 
-app.post('/api/auth/toggle-mode', (req, res) => {
+app.post('/api/auth/toggle-mode', requireAdmin, (req, res) => {
   const { mode } = req.body;
   if (mode === 'demo' || mode === 'official') {
     appMode = mode;
@@ -337,7 +342,9 @@ app.get('*', (req, res, next) => {
 // ==================== INICIALIZAÇÃO DO SERVIDOR ====================
 
 const HTTPS_PORT = process.env.HTTPS_PORT || 3443;
-const lanIps = getLanIps();
+// Na nuvem (Render define RENDER) o HTTPS é fornecido pela plataforma
+const useLocalHttps = !process.env.RENDER;
+const lanIps = useLocalHttps ? getLanIps() : [];
 
 app.listen(PORT, () => {
   console.log(`===============================================`);
@@ -348,7 +355,7 @@ app.listen(PORT, () => {
 
 // HTTPS para acessar pelo celular na mesma rede Wi-Fi:
 // o navegador só libera a localização (GPS) em páginas https.
-try {
+if (useLocalHttps) try {
   https.createServer(getLocalCertificate(lanIps), app).listen(HTTPS_PORT, () => {
     console.log(`📱 No celular (mesmo Wi-Fi), abra:`);
     lanIps.forEach((ip, i) => console.log(`   https://${ip}:${HTTPS_PORT}${i === 0 && lanIps.length > 1 ? '  ← normalmente este' : ''}`));
