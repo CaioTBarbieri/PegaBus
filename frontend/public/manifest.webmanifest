@@ -1,0 +1,15 @@
+{
+  "name": "PegaBus - Ônibus SPTrans em tempo real",
+  "short_name": "PegaBus",
+  "description": "Rastreamento de ônibus e paradas próximas em São Paulo",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f172a",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

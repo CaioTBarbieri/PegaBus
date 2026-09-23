@@ -1,0 +1,22 @@
+# Dependências
+node_modules/
+
+# Variáveis de ambiente (tokens e chaves) — NUNCA versionar
+.env
+.env.*
+!.env.example
+
+# Certificado HTTPS local (contém chave privada)
+backend/certs/
+
+# Gerados (recrie com os comandos do README)
+frontend/dist/
+backend/data/gtfs-lines.json
+
+# Logs e sistema
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
