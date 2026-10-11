@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Bus, 
   MapPin, 
@@ -32,6 +32,20 @@ export default function LineInfoPanel({
 }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState('paradas'); // 'paradas' ou 'veiculos'
+  const listRef = useRef(null);
+
+  // Rola a lista até a parada selecionada (ex.: a mais próxima ao abrir um favorito)
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list || activeTab !== 'paradas' || isCollapsed || !selectedStop?.cp) return;
+    const item = list.querySelector(`[data-cp="${selectedStop.cp}"]`);
+    if (!item) return;
+    const listBox = list.getBoundingClientRect();
+    const itemBox = item.getBoundingClientRect();
+    if (itemBox.top < listBox.top || itemBox.bottom > listBox.bottom) {
+      list.scrollTo({ top: list.scrollTop + (itemBox.top - listBox.top) - (listBox.height - itemBox.height) / 2, behavior: 'smooth' });
+    }
+  }, [selectedStop?.cp, paradas, activeTab, isCollapsed]);
 
   if (!selectedLine) {
     return null;
@@ -155,7 +169,7 @@ export default function LineInfoPanel({
           </div>
 
           {/* Conteúdo das Abas */}
-          <div className="flex-1 overflow-y-auto overscroll-contain divide-y divide-slate-100 p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
+          <div ref={listRef} className="flex-1 overflow-y-auto overscroll-contain divide-y divide-slate-100 p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
             {activeTab === 'paradas' ? (
               paradas.length > 0 ? (
                 <div className="space-y-1">
@@ -166,6 +180,7 @@ export default function LineInfoPanel({
                     return (
                       <div
                         key={parada.cp || idx}
+                        data-cp={parada.cp}
                         onClick={() => onSelectStop(parada)}
                         className={`p-2.5 rounded-xl cursor-pointer transition-all border ${
                           isSelected
