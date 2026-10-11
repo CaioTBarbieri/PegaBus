@@ -18,6 +18,36 @@ import {
   searchLines
 } from './services/api';
 
+// Localização atual do usuário; resolve null se negada/indisponível
+function getUserLocation() {
+  return new Promise(resolve => {
+    if (!navigator.geolocation) return resolve(null);
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }),
+      () => resolve(null),
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
+    );
+  });
+}
+
+// Parada mais próxima (distância aproximada equiretangular, suficiente para uma cidade)
+function nearestStop(stops, loc) {
+  const kx = Math.cos((loc.lat * Math.PI) / 180);
+  let best = null;
+  let bestDist = Infinity;
+  for (const s of stops) {
+    if (!s.py || !s.px) continue;
+    const dy = s.py - loc.lat;
+    const dx = (s.px - loc.lng) * kx;
+    const d = dx * dx + dy * dy;
+    if (d < bestDist) {
+      bestDist = d;
+      best = s;
+    }
+  }
+  return best;
+}
+
 export default function App() {
   const [authStatus, setAuthStatus] = useState(null);
   const [cartoApiKey, setCartoApiKey] = useState('');
@@ -65,8 +95,10 @@ export default function App() {
 
   // Selecionar uma linha e carregar seus dados
   // focusStop: parada para destacar no mapa depois que a linha carregar
-  const handleSelectLine = async (linha, focusStop = null) => {
+  // focusNearest: se true, destaca a parada da linha mais próxima da localização do usuário
+  const handleSelectLine = async (linha, focusStop = null, focusNearest = false) => {
     if (!linha) return;
+    const locationPromise = focusNearest ? getUserLocation() : Promise.resolve(null);
     const requestId = ++lineRequestRef.current;
     setSelectedLine(linha);
     setSelectedStop(null);
@@ -78,11 +110,12 @@ export default function App() {
 
     try {
       // Carrega paradas e posições em paralelo
-      const [stopsData, positionsData, routeData, prevData] = await Promise.all([
+      const [stopsData, positionsData, routeData, prevData, loc] = await Promise.all([
         getLineStops(linha).catch(() => []),
         getLinePositions(linha.cl).catch(() => ({ vs: [] })),
         getLineRoute(linha).catch(() => null),
-        getLinePrevisao(linha.cl).catch(() => null)
+        getLinePrevisao(linha.cl).catch(() => null),
+        locationPromise
       ]);
 
       // Ignora respostas de uma linha que já foi trocada por outra
@@ -94,6 +127,10 @@ export default function App() {
       setPrevisoes(prevData);
       if (focusStop) {
         setSelectedStop((stopsData || []).find(p => p.cp === focusStop.cp) || focusStop);
+      } else if (loc) {
+        setUserLocation(loc);
+        const nearest = nearestStop(stopsData || [], loc);
+        if (nearest) setSelectedStop(nearest);
       }
       setLastUpdated(new Date().toLocaleTimeString('pt-BR'));
     } catch (err) {
@@ -364,6 +401,7 @@ export default function App() {
           <SearchBar
             onSelectLine={(linha) => { setNearbyMode(false); handleSelectLine(linha); }}
             selectedLine={selectedLine}
+            onSelectFavorite={(linha) => { setNearbyMode(false); handleSelectLine(linha, null, true); }}
             onNearby={startNearby}
             nearbyActive={nearbyMode}
             favorites={favorites}

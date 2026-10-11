@@ -5,6 +5,7 @@ import { origemLinha, destinoLinha } from '../utils/linha';
 
 export default function SearchBar({
   onSelectLine,
+  onSelectFavorite,
   selectedLine,
   onNearby,
   nearbyActive = false,
@@ -62,8 +63,8 @@ export default function SearchBar({
     return () => clearTimeout(timer);
   }, [query]);
 
-  const handleSelect = (linha) => {
-    onSelectLine(linha);
+  const handleSelect = (linha, handler = onSelectLine) => {
+    handler(linha);
     setIsOpen(false);
     setQuery(`${linha.lt}-${linha.tl || 10} ${destinoLinha(linha)}`);
   };
@@ -136,7 +137,7 @@ export default function SearchBar({
               return (
                 <button
                   key={linha.cl}
-                  onClick={() => handleSelect(linha)}
+                  onClick={() => handleSelect(linha, onSelectFavorite || onSelectLine)}
                   className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium backdrop-blur-sm border transition-all shadow-sm shrink-0 ${
                     isActive
                       ? 'bg-blue-600 border-blue-600 text-white'
