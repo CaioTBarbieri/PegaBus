@@ -11,6 +11,12 @@
     }
   },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api" }
+    {
+      "source": "/api/(.*)",
+      "destination": "/api"
+    }
+  ],
+  "regions": [
+    "gru1"
   ]
 }

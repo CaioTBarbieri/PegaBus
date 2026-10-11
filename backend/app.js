@@ -15,13 +15,16 @@ app.use(express.json());
 
 // Estado de modo da aplicação: 'official' (usa a API SPTrans) ou 'demo'
 let appMode = process.env.SPTRANS_TOKEN ? 'official' : 'demo';
+let lastAuthError = '';
 
 // Inicializa token do ambiente se presente
 if (process.env.SPTRANS_TOKEN) {
   olhoVivoService.setToken(process.env.SPTRANS_TOKEN);
+  // Em caso de falha o modo continua 'official': as rotas usam dados demo enquanto não houver
+  // sessão e a autenticação é tentada de novo na próxima requisição.
   olhoVivoService.authenticate().catch(err => {
-    console.warn('[Server] Falha inicial ao autenticar token do .env, iniciando em modo demo:', err.message);
-    appMode = 'demo';
+    lastAuthError = err.message;
+    console.warn('[Server] Falha inicial ao autenticar token do .env:', err.message);
   });
 }
 
@@ -29,7 +32,9 @@ if (process.env.SPTRANS_TOKEN) {
 // iniciado acima não é garantido de terminar: garante a sessão antes de qualquer rota /api.
 app.use('/api', async (req, res, next) => {
   if (appMode === 'official' && olhoVivoService.getToken() && !olhoVivoService.isAuthenticated) {
-    await olhoVivoService.authenticate().catch(() => {});
+    await olhoVivoService.authenticate()
+      .then(() => { lastAuthError = ''; })
+      .catch(err => { lastAuthError = err.message; });
   }
   next();
 });
@@ -40,7 +45,8 @@ app.get('/api/auth/status', (req, res) => {
   res.json({
     authenticated: olhoVivoService.isAuthenticated,
     mode: appMode,
-    hasToken: Boolean(olhoVivoService.getToken())
+    hasToken: Boolean(olhoVivoService.getToken()),
+    ...(lastAuthError && !olhoVivoService.isAuthenticated ? { authError: lastAuthError } : {})
   });
 });
 
