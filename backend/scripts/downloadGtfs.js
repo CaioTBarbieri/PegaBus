@@ -1,5 +1,5 @@
 /**
- * Baixa o GTFS da SPTrans e gera data/gtfs-lines.json (usado no deploy, ex.: Render).
+ * Baixa o GTFS da SPTrans e gera data/gtfs-lines.json (usado no build do deploy, ex.: Vercel).
  *
  * Uso:  node scripts/downloadGtfs.js
  * Fonte: GTFS_URL (padrão: espelho público diário da Mobility Database)

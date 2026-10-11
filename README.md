@@ -83,3 +83,21 @@ Abra no navegador:
 PORT=3001
 SPTRANS_TOKEN=seu_token_aqui_64_caracteres
 ```
+
+---
+
+## ☁️ Deploy na Vercel
+
+O projeto está configurado em [vercel.json](vercel.json): o frontend (`frontend/dist`) é servido como estático e
+toda a API Express roda como uma função serverless em [api/index.js](api/index.js).
+
+1. Importe o repositório na Vercel (raiz do repositório como *Root Directory*; o resto vem do `vercel.json`).
+2. Em **Settings → Environment Variables**, defina:
+   - `SPTRANS_TOKEN` — token da API Olho Vivo (sem ele o app roda em modo demonstração)
+   - `CARTO_API_KEY` — opcional
+   - `ADMIN_KEY` — opcional, só para as rotas administrativas de token/modo
+3. Faça o deploy. O build (`npm run vercel-build`) compila o frontend e baixa o GTFS da SPTrans para
+   `backend/data/gtfs-lines.json`, que é empacotado junto com a função.
+
+Observações: na Vercel o estado fica em memória por instância, então trocar o token/modo pelas rotas
+administrativas não persiste — use as variáveis de ambiente. Para rodar localmente continue usando `npm start`.

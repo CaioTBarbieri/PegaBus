@@ -2,12 +2,13 @@
   "name": "pegabus",
   "version": "1.0.0",
   "description": "Aplicativo de Rastreamento de Ônibus em Tempo Real (Estilo Moovit) - SPTrans Olho Vivo",
+  "type": "module",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "start": "node backend/server.js",
-    "render-build": "npm --prefix backend ci && npm --prefix frontend ci --include=dev && npm --prefix frontend run build && npm --prefix backend run gtfs:download",
+    "vercel-build": "npm --prefix frontend run build && npm --prefix backend run gtfs:download",
     "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
     "build:frontend": "cd frontend && npm run build"
